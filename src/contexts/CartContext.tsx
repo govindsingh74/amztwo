@@ -84,7 +84,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
       cart = newCart;
       
-      if (!data) {
+      if (!cart) {
         console.error('User profile not found');
         return null;
       }
@@ -125,18 +125,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
+      console.log('Adding to cart:', { variantId, asin, quantity, productDetails });
+      
       const profile = await getUserProfile();
       if (!profile) throw new Error('User profile not found');
 
       const cart = await getOrCreateCart(profile.id);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
-    }
       if (!cart) throw new Error('Could not create cart');
 
+      console.log('Cart found/created:', cart);
+
       // Check if item already exists in cart
-    try {
       const { data: existingItem } = await supabase
         .from('cart_items')
         .select('*')
@@ -144,29 +143,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('variant_id', variantId)
         .single();
 
+      console.log('Existing item:', existingItem);
+
       if (existingItem) {
         // Update quantity
-        await supabase
+        const { error: updateError } = await supabase
           .from('cart_items')
           .update({ quantity: existingItem.quantity + quantity })
           .eq('id', existingItem.id);
-      } else {
-        // Add new item
-        await supabase
-          .from('cart_items')
-          .insert([{
-            cart_id: cart.id,
-            variant_id: variantId,
-            asin: asin,
-            quantity: quantity,
-            price_at_time: productDetails.price,
-            product_name: productDetails.name,
-            product_image: productDetails.image,
-            variant_weight: productDetails.weight,
-        const { error: updateError } = await supabase
-          }]);
-      }
-
         
         if (updateError) {
           console.error('Error updating cart item:', updateError);
@@ -174,8 +158,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         console.log('Updated existing cart item');
-      await refreshCart();
-    } catch (error) {
+      } else {
+        // Add new item
         const cartItemData = {
           cart_id: cart.id,
           variant_id: variantId,
@@ -191,7 +175,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Inserting cart item:', cartItemData);
         
         const { error: insertError } = await supabase
-      throw error;
+          .from('cart_items')
           .insert([cartItemData]);
         
         if (insertError) {
@@ -200,10 +184,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         console.log('Added new cart item');
+      }
+
+      console.log('Cart refreshed after adding item');
+
+      await refreshCart();
+    } catch (error) {
+      console.error('Error getting or creating cart:', error);
+      throw error;
+    }
+  };
+
+  const updateQuantity = async (itemId: string, quantity: number) => {
+    try {
+      const { error } = await supabase
         .from('cart_items')
         .update({ quantity })
         .eq('id', itemId);
-      console.log('Cart refreshed after adding item');
+      
+      if (error) {
+        console.error('Error updating quantity:', error);
+        throw error;
+      }
 
       await refreshCart();
     } catch (error) {
@@ -214,37 +216,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeFromCart = async (itemId: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('cart_items')
         .delete()
-      const { error } = await supabase
-
-      await refreshCart();
-    } catch (error) {
-      
-      if (error) {
-        console.error('Error updating quantity:', error);
-        throw error;
-      }
-      console.error('Error removing from cart:', error);
-      throw error;
-    }
-    } catch (error) {
-      console.error('Error getting or creating cart:', error);
-      return null;
-    }
-  };
-
-  const clearCart = async () => {
-      const { error } = await supabase
-
-    try {
-      const profile = await getUserProfile();
+        .eq('id', itemId);
       
       if (error) {
         console.error('Error removing from cart:', error);
         throw error;
       }
+
+      await refreshCart();
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      throw error;
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      const profile = await getUserProfile();
       if (!profile) {
         console.error('No user profile found');
         return;
@@ -256,33 +247,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      await supabase
+      const { error } = await supabase
         .from('cart_items')
         .delete()
         .eq('cart_id', cart.id);
-
-      console.log('Cart items fetched:', items);
-      setCartItems([]);
-      const { error } = await supabase
-      console.error('Error clearing cart:', error);
-      throw error;
-    }
       
       if (error) {
         console.error('Error clearing cart:', error);
         throw error;
       }
+
+      setCartItems([]);
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      throw error;
+    }
   };
 
-      console.log('Adding to cart:', { variantId, asin, quantity, productDetails });
-      
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => total + (item.price_at_time * item.quantity), 0);
   };
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-
-      console.log('Cart found/created:', cart);
 
   const value = {
     cartItems,
@@ -295,8 +281,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getCartTotal,
     refreshCart,
   };
-
-      console.log('Existing item:', existingItem);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
