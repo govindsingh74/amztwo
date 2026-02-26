@@ -55,12 +55,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return null;
     
     try {
-    const { data } = await supabase
-      .from('users')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single();
-    return data;
+      const { data } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', user.id)
+        .single();
+      return data;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
   };
 
   const getOrCreateCart = async (userId: string) => {
