@@ -96,7 +96,7 @@ const AccountDashboard: React.FC = () => {
                 </Link>
 
                 <Link
-                  to="/payment-methods"
+                  to="/account/payment-methods"
                   className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-orange-300 hover:shadow-md transition-all group"
                 >
                   <CreditCard className="h-8 w-8 text-orange-500 group-hover:text-orange-600 mr-4" />

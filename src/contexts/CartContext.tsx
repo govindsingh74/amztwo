@@ -83,12 +83,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('id')
         .single();
       cart = newCart;
-      
-      if (!cart) {
-        console.error('User profile not found');
-        return null;
-      }
-      
+    }
+
+    if (!cart) {
+      throw new Error('Failed to create or get cart');
     }
 
     return cart;
@@ -111,6 +109,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('cart_id', cart.id)
         .order('created_at', { ascending: false });
 
+      console.log('Cart items fetched:', items);
       setCartItems(items || []);
     } catch (error) {
       console.error('Error refreshing cart:', error);
@@ -174,23 +173,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('Inserting cart item:', cartItemData);
         
-        const { error: insertError } = await supabase
+        const { data: insertedItem, error: insertError } = await supabase
           .from('cart_items')
-          .insert([cartItemData]);
+          .insert([cartItemData])
+          .select()
+          .single();
         
         if (insertError) {
           console.error('Error inserting cart item:', insertError);
           throw insertError;
         }
         
-        console.log('Added new cart item');
+        console.log('Added new cart item:', insertedItem);
       }
 
-      console.log('Cart refreshed after adding item');
-
       await refreshCart();
+      console.log('Cart refreshed after adding item');
     } catch (error) {
-      console.error('Error getting or creating cart:', error);
+      console.error('Error adding to cart:', error);
       throw error;
     }
   };

@@ -15,6 +15,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Account
 import AccountDashboard from './components/Account/AccountDashboard';
 import AddressManagement from './components/Account/AddressManagement';
+import PaymentMethods from './components/Account/PaymentMethods';
+import AccountSettings from './components/Account/AccountSettings';
+import Wishlist from './components/Account/Wishlist';
+import BrowsingHistory from './components/Account/BrowsingHistory';
+import Recommendations from './components/Account/Recommendations';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -88,6 +93,46 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <AddressManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/account/payment-methods"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentMethods />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/account/profile"
+                  element={
+                    <ProtectedRoute>
+                      <AccountSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/wishlist"
+                  element={
+                    <ProtectedRoute>
+                      <Wishlist />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/browsing-history"
+                  element={
+                    <ProtectedRoute>
+                      <BrowsingHistory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/recommendations"
+                  element={
+                    <ProtectedRoute>
+                      <Recommendations />
                     </ProtectedRoute>
                   }
                 />
